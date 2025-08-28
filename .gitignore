@@ -3,3 +3,4 @@ ant/
 __pycache__
 test/
 *.json
+*.out

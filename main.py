@@ -115,7 +115,7 @@ class SimpleSummarizer:
 
 
 def main():
-    project_dir = input("Enter project directory path: ").strip()
+    project_dir = "test/guava/guava" #input("Enter project directory path: ").strip()
     
     if not os.path.exists(project_dir):
         print(f"Directory {project_dir} does not exist")

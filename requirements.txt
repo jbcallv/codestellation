@@ -13,10 +13,6 @@ asttokens==3.0.0
 async-timeout==4.0.3
 asyncer==0.0.8
 attrs==25.1.0
-autogen==0.9.2
-autogen-agentchat==0.6.1
-autogen-core==0.6.1
-autogen-ext==0.6.1
 bce-python-sdk==0.9.25
 beautifulsoup4==4.12.3
 cachetools==5.5.1
@@ -94,7 +90,6 @@ MarkupSafe==3.0.2
 matplotlib-inline==0.1.7
 mdurl==0.1.2
 meilisearch==0.21.0
-metagpt==0.8.1
 motor==3.6.1
 multidict==6.1.0
 multiprocess==0.70.17
@@ -124,7 +119,6 @@ prance==23.6.21.0
 prompt_toolkit==3.0.50
 propcache==0.2.1
 proto-plus==1.26.0
-protobuf==5.29.5
 psutil==6.1.1
 pure_eval==0.2.3
 py==1.11.0
@@ -132,8 +126,6 @@ pyarrow==19.0.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.1
 pycryptodome==3.21.0
-pydantic==2.11.7
-pydantic_core==2.33.2
 pyee==12.0.0
 Pygments==2.19.1
 PyJWT==2.8.0
