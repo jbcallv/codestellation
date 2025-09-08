@@ -12,7 +12,8 @@ class Chunker:
     def create_chunks(self, file_paths):
         all_chunks = []
         
-        for file_path in file_paths:
+        for i, file_path in enumerate(file_paths):
+            print(f"Processing file {i+1}/{len(file_paths)}: {file_path}")
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -90,7 +91,10 @@ class Chunker:
         if end_line >= len(lines):
             return end_line
         
-        for i in range(end_line - 1, start_line, -1):
+        # boundary to avoid crazy loop
+        search_limit = min(100, end_line - start_line)
+
+        for i in range(end_line - 1, max(start_line, end_line - search_limit), -1):
             line = lines[i].strip()
             
             if line.endswith('}') and not line.startswith('//'):

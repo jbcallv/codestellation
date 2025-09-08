@@ -1,5 +1,7 @@
 import threading
 from collections import defaultdict
+
+from stats_collector import stats
 from llm_client import summarize_chunk, summarize_method, summarize_file
 
 
@@ -47,6 +49,7 @@ class SummarizerAgent:
             )
             
             if method_summary:
+                stats.log_dependency_extracted()
                 context_parts.append(method_summary)
         
         return '\n'.join(context_parts)
@@ -91,21 +94,32 @@ class SharedCache:
         self.cache = {}
         self.lock = threading.Lock()
         self.pending = set()
+        self.max_size = 1000 # added to prevent memory issues
 
     def get_or_compute(self, key, compute_func):
         with self.lock:
             if key in self.cache:
+                stats.log_cache_hit()
                 return self.cache[key]
             
             if key in self.pending:
                 return None
             
             self.pending.add(key)
+        stats.log_cache_miss()
         
         try:
             result = compute_func()
             
             with self.lock:
+                # simple lru eviction - remove oldest if too big
+                if len(self.cache) >= self.max_size:
+                    oldest_key = next(iter(self.cache))
+                    del self.cache[oldest_key]
+
+                if len(self.cache) % 100 == 0:
+                    print(f"Cache size: {len(self.cache)} entries.")
+
                 self.cache[key] = result
                 self.pending.discard(key)
             

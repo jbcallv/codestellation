@@ -2,12 +2,15 @@ import time
 import json
 import requests
 from config import CLAUDE_CONFIG
+from stats_collector import stats
 
 
 def call_claude_with_backoff(messages, max_retries=10):
     """Simple exponential backoff for Claude API calls"""
     for attempt in range(max_retries):
         try:
+            stats.log_llm_call("api_request")
+
             headers = {
                 "Content-Type": "application/json",
                 "x-api-key": CLAUDE_CONFIG["api_key"],
@@ -72,6 +75,7 @@ Provide a summary that includes:
 Keep the summary concise (2-4 sentences) but informative."""
 
     messages = [{"role": "user", "content": prompt}]
+    stats.log_llm_call("chunk_summary")
     return call_claude_with_backoff(messages)
 
 
@@ -94,6 +98,7 @@ Provide a brief summary focusing on:
 Keep it concise (1-2 sentences) for use as context in other summaries."""
 
     messages = [{"role": "user", "content": prompt}]
+    stats.log_llm_call("method_summary")
     return call_claude_with_backoff(messages)
 
 
@@ -118,6 +123,7 @@ Provide a file summary that includes:
 Structure the summary clearly and keep it comprehensive but concise."""
 
     messages = [{"role": "user", "content": prompt}]
+    stats.log_llm_call("file_summary")
     return call_claude_with_backoff(messages)
 
 
@@ -143,4 +149,5 @@ Provide a project summary that includes:
 Focus on the big picture and overall system architecture."""
 
     messages = [{"role": "user", "content": prompt}]
+    stats.log_llm_call("project_summary")
     return call_claude_with_backoff(messages)

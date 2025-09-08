@@ -1,6 +1,8 @@
 import os
 import re
 
+from stats_collector import stats
+
 
 class DependencyDetector:
     def __init__(self, project_files):
@@ -13,8 +15,10 @@ class DependencyDetector:
         method_calls = self._extract_method_calls(chunk['content'])
         
         for call in method_calls:
+            stats.log_dependency_found()
             resolved_dep = self._resolve_dependency(call, chunk)
             if resolved_dep:
+                stats.log_dependency_resolved()
                 dependencies.append(resolved_dep)
         
         return dependencies

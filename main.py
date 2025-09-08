@@ -1,10 +1,12 @@
 import os
 import json
+import psutil
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from collections import defaultdict
 
 from config import CHUNKING_CONFIG, PROJECT_CONFIG, SUMMARIZER_CONFIG
+from stats_collector import stats
 from code_analyzer import CodeAnalyzer
 from chunk_processor import Chunker
 from dependency_detector import DependencyDetector
@@ -19,6 +21,7 @@ class SimpleSummarizer:
         
     def run(self):
         print(f"Starting analysis of {self.project_dir}")
+        stats.start_timing()
         
         analyzer = CodeAnalyzer(
             PROJECT_CONFIG["supported_extensions"],
@@ -78,6 +81,7 @@ class SimpleSummarizer:
             futures = []
             
             for file_path, file_chunks in chunks_by_file.items():
+                print("Processing file:", file_path)
                 worker_index = file_assignments[file_path]
                 agent = summarizer_agents[worker_index]
                 
@@ -91,7 +95,8 @@ class SimpleSummarizer:
                 completed_chunks += 1
                 
                 if completed_chunks % 10 == 0:
-                    print(f"Processed {completed_chunks}/{len(chunks)} chunks")
+                    memory_usage = psutil.Process().memory_info().rss / 1024 / 1024
+                    print(f"Processed {completed_chunks}/{len(chunks)} chunks - Memory: {memory_usage:.1f}MB")
                 
                 if file_summary:
                     print(f"Completed file summary for a file")
@@ -104,7 +109,13 @@ class SimpleSummarizer:
             list(all_file_summaries.values()), 
             self.project_dir
         )
-        
+
+        stats.end_timing()
+
+        project_name = os.path.basename(self.project_dir)
+        stats_file = stats.export_stats(project_name)
+        print(f"\n\nStats exported to: {stats_file}")
+
         return {
             'project_summary': project_summary,
             'file_summaries': all_file_summaries,
@@ -115,7 +126,7 @@ class SimpleSummarizer:
 
 
 def main():
-    project_dir = "test/guava/guava" #input("Enter project directory path: ").strip()
+    project_dir = "test/guava" #input("Enter project directory path: ").strip()
     
     if not os.path.exists(project_dir):
         print(f"Directory {project_dir} does not exist")
@@ -124,7 +135,7 @@ def main():
     summarizer = SimpleSummarizer(project_dir)
     results = summarizer.run()
 
-    output_file = f"summary_{os.path.basename(project_dir)}.json"
+    output_file = f"results/summary_{os.path.basename(project_dir)}.json"
     with open(output_file, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     
