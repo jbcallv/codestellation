@@ -52,7 +52,6 @@ class StatsCollector:
         stats = {
             "project": project_name,
             "llm_calls": dict(self.llm_calls),
-            "total_llm_calls": sum(self.llm_calls.values()),
             "dependency_extractions": self.dependency_extractions,
             "cache_hits": self.cache_hits,
             "cache_misses": self.cache_misses,
