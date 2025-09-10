@@ -7,7 +7,7 @@ sys.path.append('../..')
 from llm_client import call_claude_with_backoff
 
 
-def judge_file_summary(file_content, summary, language="Java"):
+def judge_file_summary(file_content, summary, language="Java", api_key=""):
     prompt = f"""You will be provided with a {language} file ("File") and a textual summary of it ("Summary"). The goal of the Summary is to document the functionality implemented in the File. Your role is to evaluate the Summary across three criteria, providing as output for each of them a rating and a rationale.
 
 # Evaluation Criteria
@@ -21,7 +21,11 @@ For each criterion, provide a score on a scale from 1 to 5: 1 (Very poor), 2 (Po
 # Summary: {summary}"""
 
     messages = [{"role": "user", "content": prompt}]
-    response = call_claude_with_backoff(messages)
+
+    if api_key:
+        response = call_claude_with_backoff(messages, api_key)
+    else:
+        response = call_claude_with_backoff(messages)
     
     scores = extract_scores(response)
     

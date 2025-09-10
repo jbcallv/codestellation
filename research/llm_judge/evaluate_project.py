@@ -5,6 +5,9 @@ import os
 import statistics
 from llm_judge import judge_file_summary, extract_scores
 
+sys.path.append("../../")
+from config import CLAUDE_CONFIG
+
 
 def load_project_data(json_path):
     with open(json_path, 'r') as f:
@@ -44,7 +47,7 @@ def evaluate_summaries(sampled_paths, file_summaries):
             continue
             
         summary = file_summaries[file_path]
-        judgment = judge_file_summary(file_content, summary)
+        judgment = judge_file_summary(file_content, summary, CLAUDE_CONFIG["secondary_api_key"])
         
         scores = judgment['scores']
         all_scores.append(scores)

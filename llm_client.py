@@ -5,7 +5,7 @@ from config import CLAUDE_CONFIG
 from stats_collector import stats
 
 
-def call_claude_with_backoff(messages, max_retries=10):
+def call_claude_with_backoff(messages, max_retries=10, api_key=CLAUDE_CONFIG["api_key"]):
     """Simple exponential backoff for Claude API calls"""
     for attempt in range(max_retries):
         try:
@@ -13,7 +13,7 @@ def call_claude_with_backoff(messages, max_retries=10):
 
             headers = {
                 "Content-Type": "application/json",
-                "x-api-key": CLAUDE_CONFIG["api_key"],
+                "x-api-key": api_key,
                 "anthropic-version": "2023-06-01"
             }
             
