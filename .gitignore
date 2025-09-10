@@ -2,6 +2,8 @@ config.py
 ant/
 __pycache__
 test/
+experiments/
 *.json
 *.out
 *.csv
+
