@@ -94,7 +94,6 @@ For each criterion, provide a score on a scale from 1 to 5: 1 (Very poor), 2 (Po
         "raw_response": response
     }
 
-
 def extract_scores(response):
     import re
 
@@ -104,11 +103,26 @@ def extract_scores(response):
         "fluency_understandability": None
     }
 
+    # try X/Y format first
     score_matches = re.findall(r'(\d)/(\d)', response)
     criteria = ["content_adequacy", "conciseness", "fluency_understandability"]
 
     for i, match in enumerate(score_matches[:3]):
         if i < len(criteria):
             scores[criteria[i]] = int(match[0])
+
+    # if we didn't get all 3 scores, try standalone number format
+    if None in scores.values():
+        # look for patterns like "category:** 4" or "category:** 4 "
+        content_match = re.search(r'content\s+adequacy\*\*:\s*(\d)', response, re.IGNORECASE)
+        concise_match = re.search(r'conciseness\*\*:\s*(\d)', response, re.IGNORECASE)
+        fluency_match = re.search(r'fluency.*understandability\*\*:\s*(\d)', response, re.IGNORECASE)
+        
+        if content_match and scores["content_adequacy"] is None:
+            scores["content_adequacy"] = int(content_match.group(1))
+        if concise_match and scores["conciseness"] is None:
+            scores["conciseness"] = int(concise_match.group(1))
+        if fluency_match and scores["fluency_understandability"] is None:
+            scores["fluency_understandability"] = int(fluency_match.group(1))
 
     return scores
