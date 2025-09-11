@@ -24,33 +24,32 @@ def run_project_ablation(project_name):
     print(f"\n{'='*60}")
     print(f"RUNNING ABLATION FOR: {project_name}")
     print(f"{'='*60}")
-    
+
     output_file = os.path.join(OUTPUT_DIR, f"{project_name}_ablation.json")
-    
+
     cmd = [
-        "python", 
-        "run_ablation_study.py", 
-        project_name, 
-        str(N_SAMPLES), 
+        "python",
+        "-u",
+        "run_ablation_study.py",
+        project_name,
+        str(N_SAMPLES),
         output_file
     ]
-    
+
     start_time = time.time()
-    
+
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=3600)
-        
+        result = subprocess.run(cmd, timeout=3600)
+
         if result.returncode == 0:
             elapsed = time.time() - start_time
             print(f"✅ {project_name} completed in {elapsed:.1f}s")
             print(f"   Output: {output_file}")
             return True
         else:
-            print(f"❌ {project_name} failed:")
-            print(f"   stdout: {result.stdout}")
-            print(f"   stderr: {result.stderr}")
+            print(f"❌ {project_name} failed with return code {result.returncode}")
             return False
-            
+
     except subprocess.TimeoutExpired:
         print(f"⏰ {project_name} timed out after 1 hour")
         return False
