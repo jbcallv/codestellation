@@ -127,6 +127,28 @@ Structure the summary clearly and keep it comprehensive but concise."""
     return call_claude_with_backoff(messages)
 
 
+def summarize_file_single_llm(file_content, file_path):
+    prompt = f"""Create a comprehensive file-level summary from this Java file.
+
+File: {file_path}
+
+```java
+{file_content}
+```
+
+Provide a file summary that includes:
+- Overall purpose and responsibility of the file
+- Main classes and their roles
+- Key methods and functionality
+- Dependencies and relationships
+- Design patterns or architectural notes
+
+Structure the summary clearly and keep it comprehensive but concise."""
+
+    messages = [{"role": "user", "content": prompt}]
+    return call_claude_with_backoff(messages)
+
+
 def summarize_project(file_summaries, project_path):
     """Create project-level summary from file summaries"""
     files_text = "\n\n".join([f"File: {i+1}\n{summary}" for i, summary in enumerate(file_summaries)])
