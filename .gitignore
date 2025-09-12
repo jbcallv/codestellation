@@ -7,3 +7,6 @@ experiments/
 *.out
 *.csv
 
+# INCLUDE JSON ablation
+!research/ablation/ablation_results/*.json
+
