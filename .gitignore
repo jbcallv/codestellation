@@ -4,6 +4,7 @@ __pycache__
 test/
 experiments/
 *.json
+*.jsonl
 *.out
 *.csv
 

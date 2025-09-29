@@ -1,8 +1,43 @@
+import os
 import time
 import json
 import requests
+import random
+import threading
+
 from config import CLAUDE_CONFIG
 from stats_collector import stats
+
+
+class PromptTracker:
+    def __init__(self):
+        self.filename = "prompt_logs/prompts.jsonl"
+        self.lock = threading.Lock()
+
+    def should_log(self):
+        return random.randint(1, 100) <= 80 # log 80% of prompts
+
+    def log_prompt(self, prompt_type, messages, response):
+        try:
+            if not self.should_log():
+                return
+
+            entry = {
+                "prompt_type": prompt_type,
+                "messages": messages,
+                "response": response
+            }
+
+            with self.lock:
+                os.makedirs("prompt_logs", exist_ok=True)
+                with open(self.filename, 'a') as f:
+                    f.write(json.dumps(entry) + '\n')
+
+        except Exception as e:
+            print("Something is wrong.", e)
+
+
+prompt_tracker = PromptTracker()
 
 
 def call_claude_with_backoff(messages, max_retries=10, api_key=CLAUDE_CONFIG["api_key"]):
@@ -54,25 +89,27 @@ def call_claude_with_backoff(messages, max_retries=10, api_key=CLAUDE_CONFIG["ap
 
 
 def summarize_chunk(chunk_content, context=""):
-    """Summarize a code chunk with optional dependency context"""
     context_section = ""
     if context.strip():
         context_section = f"\n\nDependency Context:\n{context}"
     
-    prompt = f"""Analyze this Java code chunk and provide a concise summary.
+    prompt = f"""Analyze this Java code chunk with full understanding of its dependencies.
 
 Code Chunk:
 ```java
 {chunk_content}
-```{context_section}
+```
 
-Provide a summary that includes:
-- Main purpose/functionality
-- Key methods or logic
-- Important variables or data structures
-- Any notable patterns or algorithms
+Dependency Context:
+{context}
 
-Keep the summary concise (2-4 sentences) but informative."""
+Using the dependency context above, create a comprehensive summary that explains:
+1. What this code does and why (given the dependency behaviors)
+2. How it integrates with the dependencies shown in context
+3. The complete data flow and method interactions
+4. Any patterns or logic that emerge from the dependency relationships
+
+Write a detailed technical explanation that demonstrates deep understanding of how this code fits into the larger system."""
 
     messages = [{"role": "user", "content": prompt}]
     stats.log_llm_call("chunk_summary")
@@ -80,22 +117,20 @@ Keep the summary concise (2-4 sentences) but informative."""
 
 
 def summarize_method(method_content, file_path, method_name):
-    """Summarize a specific method for dependency context"""
-    prompt = f"""Summarize this Java method for use as dependency context.
+    prompt = f"""Summarize this Java method for dependency analysis.
 
-File: {file_path}
-Method: {method_name}
+Method: {method_name} in {file_path}
 
 ```java
 {method_content}
 ```
 
-Provide a brief summary focusing on:
-- What the method does
-- Key parameters and return value
-- Important behavior or side effects
+Provide a concise technical summary covering:
+- Core functionality and purpose
+- Key parameters and return behavior
+- Side effects or state changes
 
-Keep it concise (1-2 sentences) for use as context in other summaries."""
+Keep to 1-2 precise sentences for use as dependency context."""
 
     messages = [{"role": "user", "content": prompt}]
     stats.log_llm_call("method_summary")
@@ -103,28 +138,35 @@ Keep it concise (1-2 sentences) for use as context in other summaries."""
 
 
 def summarize_file(chunk_summaries, file_path):
-    """Create file-level summary from chunk summaries"""
     chunks_text = "\n\n".join([f"Chunk {i+1}: {summary}" for i, summary in enumerate(chunk_summaries)])
     
-    prompt = f"""Create a comprehensive file-level summary from these chunk summaries.
+    prompt = f"""Write a 3-4 sentence technical summary of this file's functionality.
 
 File: {file_path}
 
-Chunk Summaries:
+Code Section Summaries:
 {chunks_text}
 
-Provide a file summary that includes:
-- Overall purpose and responsibility of the file
-- Main classes and their roles
-- Key methods and functionality
-- Dependencies and relationships
-- Design patterns or architectural notes
+Focus ONLY on what the code actually does:
+1. What is the primary purpose of this file?
+2. What are the key methods and what do they do?
+3. What data does it manage and how?
 
-Structure the summary clearly and keep it comprehensive but concise."""
+Do NOT:
+- Infer design patterns unless explicitly implemented (e.g., don't say "Repository Pattern" unless you see an interface)
+- Describe architectural decisions that aren't evident in the code
+- Make recommendations for future improvements
+- Discuss scalability, complexity ratings, or maintainability
+- Speculate about "potential integrations" or "system roles"
+
+Be specific. Be direct. Describe only what you can see in the code."""
 
     messages = [{"role": "user", "content": prompt}]
     stats.log_llm_call("file_summary")
-    return call_claude_with_backoff(messages)
+
+    response = call_claude_with_backoff(messages)
+    prompt_tracker.log_prompt("file_summary", messages, response)
+    return response #call_claude_with_backoff(messages)
 
 
 def summarize_file_single_llm(file_content, file_path):
@@ -136,14 +178,15 @@ File: {file_path}
 {file_content}
 ```
 
-Provide a file summary that includes:
-- Overall purpose and responsibility of the file
-- Main classes and their roles
-- Key methods and functionality
-- Dependencies and relationships
-- Design patterns or architectural notes
+Generate a complete technical summary that includes:
+1. File's primary purpose and responsibility within the system
+2. Main classes and their specific roles
+3. Key public methods and their functionality
+4. Important data structures and algorithms
+5. Dependencies and how this file integrates with other components
+6. Design patterns or architectural decisions
 
-Structure the summary clearly and keep it comprehensive but concise."""
+Structure as clear, informative paragraphs that fully document the file's implementation and purpose."""
 
     messages = [{"role": "user", "content": prompt}]
     return call_claude_with_backoff(messages)
