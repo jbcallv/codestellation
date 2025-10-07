@@ -126,7 +126,7 @@ class SimpleSummarizer:
 
 
 def main():
-    project_dir = "test/java" #research/experiments/scala-maven-plugin" #input("Enter project directory path: ").strip()
+    project_dir = "research/experiments/hive" #input("Enter project directory path: ").strip()
     
     if not os.path.exists(project_dir):
         print(f"Directory {project_dir} does not exist")

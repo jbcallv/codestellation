@@ -93,9 +93,9 @@ def summarize_chunk(chunk_content, context=""):
     if context.strip():
         context_section = f"\n\nDependency Context:\n{context}"
     
-    prompt = f"""Analyze this Java code chunk with full understanding of its dependencies.
+    prompt = f"""Summarize what this Java code does.
 
-Code Chunk:
+Code:
 ```java
 {chunk_content}
 ```
@@ -103,13 +103,12 @@ Code Chunk:
 Dependency Context:
 {context}
 
-Using the dependency context above, create a comprehensive summary that explains:
-1. What this code does and why (given the dependency behaviors)
-2. How it integrates with the dependencies shown in context
-3. The complete data flow and method interactions
-4. Any patterns or logic that emerge from the dependency relationships
+Describe:
+1. What this code does
+2. Which methods it calls (from the dependency context if provided)
+3. What data it manipulates
 
-Write a detailed technical explanation that demonstrates deep understanding of how this code fits into the larger system."""
+Be specific and direct. Do not infer design patterns or architectural intent."""
 
     messages = [{"role": "user", "content": prompt}]
     stats.log_llm_call("chunk_summary")
@@ -140,7 +139,7 @@ Keep to 1-2 precise sentences for use as dependency context."""
 def summarize_file(chunk_summaries, file_path):
     chunks_text = "\n\n".join([f"Chunk {i+1}: {summary}" for i, summary in enumerate(chunk_summaries)])
     
-    prompt = f"""Write a 3-4 sentence technical summary of this file's functionality.
+    prompt = f"""Write a 3-4 sentence technical summary of this file based on the code section summaries below.
 
 File: {file_path}
 
@@ -153,13 +152,13 @@ Focus ONLY on what the code actually does:
 3. What data does it manage and how?
 
 Do NOT:
-- Infer design patterns unless explicitly implemented (e.g., don't say "Repository Pattern" unless you see an interface)
-- Describe architectural decisions that aren't evident in the code
+- Infer design patterns unless explicitly mentioned in the summaries
+- Describe architectural decisions not evident in the summaries
 - Make recommendations for future improvements
 - Discuss scalability, complexity ratings, or maintainability
 - Speculate about "potential integrations" or "system roles"
 
-Be specific. Be direct. Describe only what you can see in the code."""
+Be specific. Be direct. Synthesize only what you see in the summaries."""
 
     messages = [{"role": "user", "content": prompt}]
     stats.log_llm_call("file_summary")
@@ -170,7 +169,7 @@ Be specific. Be direct. Describe only what you can see in the code."""
 
 
 def summarize_file_single_llm(file_content, file_path):
-    prompt = f"""Create a comprehensive file-level summary from this Java file.
+    prompt = f"""Write a 3-4 sentence technical summary of this file.
 
 File: {file_path}
 
@@ -178,15 +177,19 @@ File: {file_path}
 {file_content}
 ```
 
-Generate a complete technical summary that includes:
-1. File's primary purpose and responsibility within the system
-2. Main classes and their specific roles
-3. Key public methods and their functionality
-4. Important data structures and algorithms
-5. Dependencies and how this file integrates with other components
-6. Design patterns or architectural decisions
+Focus ONLY on what the code actually does:
+1. What is the primary purpose of this file?
+2. What are the key methods and what do they do?
+3. What data does it manage and how?
 
-Structure as clear, informative paragraphs that fully document the file's implementation and purpose."""
+Do NOT:
+- Infer design patterns unless explicitly mentioned in the summaries
+- Describe architectural decisions not evident in the summaries
+- Make recommendations for future improvements
+- Discuss scalability, complexity ratings, or maintainability
+- Speculate about "potential integrations" or "system roles"
+
+Be specific. Be direct. Synthesize only what you see in the summaries."""
 
     messages = [{"role": "user", "content": prompt}]
     return call_claude_with_backoff(messages)
