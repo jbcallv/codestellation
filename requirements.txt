@@ -184,3 +184,4 @@ wrapt==1.15.0
 yarl==1.18.3
 zhipuai==2.0.1
 zipp==3.23.0
+textstat
