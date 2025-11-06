@@ -3,6 +3,7 @@ ant/
 __pycache__
 test/
 experiments/
+2experiments/
 *.json
 *.jsonl
 *.out
